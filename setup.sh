@@ -221,15 +221,17 @@ info "Step 9/12: Setting up rclone sync cron (every 15 min)..."
 CRON_TAG="# session-vault-rclone-sync"
 RCLONE_CRON="*/15 * * * * rclone bisync \"${VAULT_LOCAL}/vault/\" \"${RCLONE_REMOTE}\" --create-empty-src-dirs --resilient 2>/dev/null ${CRON_TAG}"
 
+# Get existing crontab (empty string if none)
+EXISTING_CRON="$(crontab -l 2>/dev/null || true)"
+
 # Check if already installed
-if crontab -l 2>/dev/null | grep -q "session-vault-rclone-sync"; then
+if echo "$EXISTING_CRON" | grep -q "session-vault-rclone-sync"; then
     warn "rclone cron already installed — updating"
-    # Remove old entry
-    crontab -l 2>/dev/null | grep -v "session-vault-rclone-sync" | crontab -
+    EXISTING_CRON="$(echo "$EXISTING_CRON" | grep -v "session-vault-rclone-sync" || true)"
 fi
 
 # Add new entry
-(crontab -l 2>/dev/null; echo "$RCLONE_CRON") | crontab -
+printf '%s\n%s\n' "$EXISTING_CRON" "$RCLONE_CRON" | crontab -
 ok "rclone bisync cron installed (every 15 min)"
 
 # --- Step 10: Add QMD re-index cron ---
@@ -241,12 +243,14 @@ if command -v qmd &>/dev/null; then
     QMD_PATH="$(which qmd)"
     QMD_CRON="*/30 * * * * ${QMD_PATH} index sessions 2>/dev/null ${QMD_CRON_TAG}"
 
-    if crontab -l 2>/dev/null | grep -q "session-vault-qmd-reindex"; then
+    EXISTING_CRON="$(crontab -l 2>/dev/null || true)"
+
+    if echo "$EXISTING_CRON" | grep -q "session-vault-qmd-reindex"; then
         warn "QMD reindex cron already installed — updating"
-        crontab -l 2>/dev/null | grep -v "session-vault-qmd-reindex" | crontab -
+        EXISTING_CRON="$(echo "$EXISTING_CRON" | grep -v "session-vault-qmd-reindex" || true)"
     fi
 
-    (crontab -l 2>/dev/null; echo "$QMD_CRON") | crontab -
+    printf '%s\n%s\n' "$EXISTING_CRON" "$QMD_CRON" | crontab -
     ok "QMD reindex cron installed (every 30 min)"
 else
     warn "QMD not available — skipping reindex cron"
