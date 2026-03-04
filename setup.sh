@@ -150,7 +150,15 @@ fi
 
 info "Step 7/12: Registering SessionEnd hook..."
 
-EXPORT_SCRIPT="${SCRIPT_DIR}/scripts/export-session.sh"
+# Create a wrapper script at a space-free path to avoid shell word splitting
+WRAPPER_SCRIPT="${VAULT_LOCAL}/export-session.sh"
+cat > "$WRAPPER_SCRIPT" << WRAPEOF
+#!/usr/bin/env bash
+exec "${SCRIPT_DIR}/scripts/export-session.sh" "\$@"
+WRAPEOF
+chmod +x "$WRAPPER_SCRIPT"
+
+EXPORT_SCRIPT="$WRAPPER_SCRIPT"
 
 # Use Python for safe JSON merging
 python3 << PYEOF
