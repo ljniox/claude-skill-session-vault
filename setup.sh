@@ -226,21 +226,27 @@ ok "Scripts are executable"
 
 info "Step 9/12: Setting up rclone sync cron (every 15 min)..."
 
-CRON_TAG="# session-vault-rclone-sync"
-RCLONE_CRON="*/15 * * * * rclone bisync \"${VAULT_LOCAL}/vault/\" \"${RCLONE_REMOTE}\" --create-empty-src-dirs --resilient 2>/dev/null ${CRON_TAG}"
+CRON_TAG_PUSH="# session-vault-rclone-push"
+CRON_TAG_PULL="# session-vault-rclone-pull"
+# Push local sessions to remote (this machine's hostname dir only)
+RCLONE_PUSH="*/15 * * * * rclone copy \"${VAULT_LOCAL}/vault/${HOSTNAME_SHORT}/\" \"${RCLONE_REMOTE}${HOSTNAME_SHORT}/\" 2>/dev/null ${CRON_TAG_PUSH}"
+# Pull all remote sessions to local (get other machines' sessions)
+RCLONE_PULL="3,18,33,48 * * * * rclone copy \"${RCLONE_REMOTE}\" \"${VAULT_LOCAL}/vault/\" 2>/dev/null ${CRON_TAG_PULL}"
 
 # Get existing crontab (empty string if none)
 EXISTING_CRON="$(crontab -l 2>/dev/null || true)"
 
-# Check if already installed
-if echo "$EXISTING_CRON" | grep -q "session-vault-rclone-sync"; then
-    warn "rclone cron already installed — updating"
-    EXISTING_CRON="$(echo "$EXISTING_CRON" | grep -v "session-vault-rclone-sync" || true)"
-fi
+# Remove old entries (including legacy bisync)
+for tag in "session-vault-rclone-sync" "session-vault-rclone-push" "session-vault-rclone-pull"; do
+    if echo "$EXISTING_CRON" | grep -q "$tag"; then
+        warn "Removing old cron: $tag"
+        EXISTING_CRON="$(echo "$EXISTING_CRON" | grep -v "$tag" || true)"
+    fi
+done
 
-# Add new entry
-printf '%s\n%s\n' "$EXISTING_CRON" "$RCLONE_CRON" | crontab -
-ok "rclone bisync cron installed (every 15 min)"
+# Add new entries
+printf '%s\n%s\n%s\n' "$EXISTING_CRON" "$RCLONE_PUSH" "$RCLONE_PULL" | crontab -
+ok "rclone cron installed (push every 15 min, pull every 15 min offset)"
 
 # --- Step 10: Add QMD re-index cron ---
 
