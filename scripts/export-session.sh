@@ -103,8 +103,9 @@ main() {
     local session_id
     session_id="$(basename "$jsonl_file" .jsonl)"
 
-    # Skip if it's not a UUID-like filename
-    if [[ ! "$session_id" =~ ^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$ ]]; then
+    # Skip if it's not a session filename (UUID or agent-*)
+    if [[ ! "$session_id" =~ ^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$ ]] && \
+       [[ ! "$session_id" =~ ^agent-[a-f0-9]{7,} ]]; then
         echo "[session-vault] Skipping non-session file: $session_id" >&2
         exit 0
     fi

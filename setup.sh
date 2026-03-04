@@ -277,8 +277,9 @@ if [[ "$BULK_EXPORT" == "true" ]]; then
         while IFS= read -r jsonl_file; do
             session_id="$(basename "$jsonl_file" .jsonl)"
 
-            # Skip non-UUID filenames
-            if [[ ! "$session_id" =~ ^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$ ]]; then
+            # Skip non-session filenames (accept UUID and agent-*)
+            if [[ ! "$session_id" =~ ^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$ ]] && \
+               [[ ! "$session_id" =~ ^agent-[a-f0-9]{7,} ]]; then
                 continue
             fi
 
