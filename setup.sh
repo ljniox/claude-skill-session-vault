@@ -27,7 +27,7 @@ HOSTNAME_SHORT="$(hostname -s)"
 CLAUDE_DIR="$HOME/.claude"
 SETTINGS_FILE="${CLAUDE_DIR}/settings.json"
 SKILLS_DIR="${CLAUDE_DIR}/skills"
-RCLONE_REMOTE="jss:DIRECTEUR TECHNIQUE/AI CONTINUOUS S DELIVERY/DEV STACK/session-vault/vault/"
+RCLONE_REMOTE="jss:"
 BULK_EXPORT=false
 
 # Parse args
